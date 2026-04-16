@@ -16,13 +16,18 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // 1. 로그인 API 허용
-                        .requestMatchers("/api/auth/login").permitAll()
+                        // 1. 로그인 및 Swagger 관련 경로 모두 허용
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/v3/api-docs/**",    // Swagger 데이터 경로
+                                "/swagger-ui/**",     // Swagger UI 경로
+                                "/swagger-ui.html"    // Swagger HTML 접속 경로
+                        ).permitAll()
 
-                        // 2. 장비 목록 및 모든 서브 경로(상세, 센서 등) 허용
+                        // 2. 장비 및 센서 API 허용
                         .requestMatchers("/api/equipments/**").permitAll()
 
-                        // 3. 나머지는 여전히 인증 필요
+                        // 3. 나머지는 인증 필요
                         .anyRequest().authenticated()
                 );
 
