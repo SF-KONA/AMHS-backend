@@ -9,4 +9,5 @@ public class AuthResponseDto {
     private boolean success;
     private String message;
     private String token;
+    private String role;
 }
