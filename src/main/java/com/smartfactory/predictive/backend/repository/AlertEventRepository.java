@@ -20,4 +20,8 @@ public interface AlertEventRepository extends JpaRepository<AlertEvent, Long> {
             @Param("alertLevel") Byte alertLevel,
             @Param("deviceId") String deviceId,
             @Param("acknowledged") Boolean acknowledged);
+
+    // 중복 알림 방지용 - 미확인 알림 존재 여부 확인
+    boolean existsByDeviceIdAndSensorNameAndAcknowledgedFalse(
+            String deviceId, String sensorName);
 }
