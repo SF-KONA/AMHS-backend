@@ -4,12 +4,13 @@ import com.smartfactory.predictive.backend.dto.EquipmentDetailResponseDto;
 import com.smartfactory.predictive.backend.dto.EquipmentListResponseDto;
 import com.smartfactory.predictive.backend.dto.SensorDataResponseDto;
 import com.smartfactory.predictive.backend.repository.DeviceRepository;
-import com.smartfactory.predictive.backend.repository.SensorReadingRepository; // 추가
+import com.smartfactory.predictive.backend.repository.SensorReadingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,20 +65,34 @@ public class EquipmentService {
     }
 
     /**
-     *특정 장비의 최근 센서 데이터 60건 조회 (차트용)
-     *
+     * 특정 장비의 최근 센서 데이터 60건 조회 (차트용)
      */
     @Transactional(readOnly = true)
     public List<SensorDataResponseDto> getRecentSensorData(String id) {
-        // Repository에 추가한 findTop60ByDeviceIdOrderByCollectedAtDesc 메서드를 사용합니다.
         return sensorReadingRepository.findTop60ByDeviceIdOrderByCollectedAtDesc(id).stream()
                 .map(s -> new SensorDataResponseDto(
-                        s.getPm10(),      // 미세먼지
-                        s.getNtc(),       // 온도 (엔티티 필드명: ntc)
-                        s.getCt1(),       // 전류 (엔티티 필드명: ct1)
-                        s.getIrTempMax(),  // IR 최고온도 (엔티티 필드명: irTempMax)
-                        s.getCollectedAt() // 데이터 수집 시간
+                        s.getPm10(),
+                        s.getNtc(),
+                        s.getCt1(),
+                        s.getIrTempMax(),
+                        s.getCollectedAt()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 특정 장비의 최신 센서 데이터 1건 조회 (실시간 push용)
+     */
+    @Transactional(readOnly = true)
+    public Optional<SensorDataResponseDto> getLatestSensorData(String deviceId) {
+        return sensorReadingRepository
+                .findTopByDeviceIdOrderByCollectedAtDesc(deviceId)
+                .map(s -> new SensorDataResponseDto(
+                        s.getPm10(),
+                        s.getNtc(),
+                        s.getCt1(),
+                        s.getIrTempMax(),
+                        s.getCollectedAt()
+                ));
     }
 }
