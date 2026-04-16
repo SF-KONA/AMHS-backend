@@ -8,6 +8,7 @@ import com.smartfactory.predictive.backend.domain.enums.DeviceType;
 import com.smartfactory.predictive.backend.domain.enums.OrderType;
 import com.smartfactory.predictive.backend.domain.enums.Priority;
 import com.smartfactory.predictive.backend.repository.AlertEventRepository;
+import com.smartfactory.predictive.backend.repository.DeviceRepository;
 import com.smartfactory.predictive.backend.repository.MaintOrderRepository;
 import com.smartfactory.predictive.backend.repository.SensorReadingRepository;
 import com.smartfactory.predictive.backend.repository.ThresholdRuleRepository;
@@ -17,7 +18,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -29,37 +32,44 @@ public class SensorCheckScheduler {
     private final ThresholdRuleRepository thresholdRuleRepository;
     private final AlertEventRepository alertEventRepository;
     private final MaintOrderRepository maintOrderRepository;
+    private final DeviceRepository deviceRepository;
 
-    private Long lastProcessedId = 0L;
+    private final Map<String, Long> lastProcessedIdMap = new HashMap<>();
 
     @Scheduled(fixedDelay = 20000)
     @Transactional
     public void checkSensor() {
-        List<SensorReading> readings = sensorReadingRepository
-                .findTop10ByIdGreaterThanOrderByIdAsc(lastProcessedId);
+        List<String> deviceIds = deviceRepository.findAll()
+                .stream()
+                .map(d -> d.getDeviceId())
+                .toList();
 
-        if (readings.isEmpty()) {
-            log.info("새로운 센서 데이터 없음");
-            return;
-        }
+        for (String deviceId : deviceIds) {
+            Long lastId = lastProcessedIdMap.getOrDefault(deviceId, 0L);
 
-        for (SensorReading reading : readings) {
-            String deviceType = reading.getDeviceId().substring(0, 3).toUpperCase();
+            List<SensorReading> readings = sensorReadingRepository
+                    .findTop3ByDeviceIdAndIdGreaterThanOrderByIdAsc(deviceId, lastId);
+
+            if (readings.isEmpty()) continue;
+
+            String deviceType = deviceId.substring(0, 3).toUpperCase();
             DeviceType type = DeviceType.valueOf(deviceType);
 
-            checkAndAlert(reading, type, "PM10", reading.getPm10());
-            checkAndAlert(reading, type, "PM2P5", reading.getPm2p5());
-            checkAndAlert(reading, type, "PM1P0", reading.getPm1p0());
-            checkAndAlert(reading, type, "NTC", reading.getNtc());
-            checkAndAlert(reading, type, "CT1", reading.getCt1());
-            checkAndAlert(reading, type, "CT2", reading.getCt2());
-            checkAndAlert(reading, type, "CT3", reading.getCt3());
-            checkAndAlert(reading, type, "CT4", reading.getCt4());
-            checkAndAlert(reading, type, "IR_TEMP_MAX", reading.getIrTempMax());
-        }
+            for (SensorReading reading : readings) {
+                checkAndAlert(reading, type, "PM10", reading.getPm10());
+                checkAndAlert(reading, type, "PM2P5", reading.getPm2p5());
+                checkAndAlert(reading, type, "PM1P0", reading.getPm1p0());
+                checkAndAlert(reading, type, "NTC", reading.getNtc());
+                checkAndAlert(reading, type, "CT1", reading.getCt1());
+                checkAndAlert(reading, type, "CT2", reading.getCt2());
+                checkAndAlert(reading, type, "CT3", reading.getCt3());
+                checkAndAlert(reading, type, "CT4", reading.getCt4());
+                checkAndAlert(reading, type, "IR_TEMP_MAX", reading.getIrTempMax());
+            }
 
-        lastProcessedId = readings.get(readings.size() - 1).getId();
-        log.info("마지막 처리 id: {}", lastProcessedId);
+            lastProcessedIdMap.put(deviceId, readings.get(readings.size() - 1).getId());
+            log.info("장비: {}, 마지막 처리 id: {}", deviceId, lastProcessedIdMap.get(deviceId));
+        }
     }
 
     private void checkAndAlert(SensorReading reading, DeviceType type, String sensorName, Double value) {
