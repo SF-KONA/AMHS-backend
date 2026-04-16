@@ -26,6 +26,7 @@ public class EquipmentService {
                         d.getDeviceId(),
                         d.getDeviceType().name(),
                         d.getLineId(),
+                        d.getCumulativeOperatingDay(), // 추가: 엔티티에서 값을 가져와 담아줍니다
                         d.getStatus().name(),
                         d.getDeviceName(),
                         d.getDeviceManufacturer()
