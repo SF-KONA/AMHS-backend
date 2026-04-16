@@ -30,12 +30,11 @@ public class SensorCheckScheduler {
     private final AlertEventRepository alertEventRepository;
     private final MaintOrderRepository maintOrderRepository;
 
-    private Long lastProcessedId = 0L; // 마지막으로 처리한 sensor_reading_id
+    private Long lastProcessedId = 0L;
 
-    @Scheduled(fixedDelay = 10000) // 10초마다 실행
+    @Scheduled(fixedDelay = 20000)
     @Transactional
     public void checkSensor() {
-        // 1. 마지막 처리 id 이후 10개 가져오기
         List<SensorReading> readings = sensorReadingRepository
                 .findTop10ByIdGreaterThanOrderByIdAsc(lastProcessedId);
 
@@ -45,11 +44,9 @@ public class SensorCheckScheduler {
         }
 
         for (SensorReading reading : readings) {
-            // 2. deviceId로 deviceType 추출 (oht01 → OHT)
             String deviceType = reading.getDeviceId().substring(0, 3).toUpperCase();
             DeviceType type = DeviceType.valueOf(deviceType);
 
-            // 3. 각 센서값 체크
             checkAndAlert(reading, type, "PM10", reading.getPm10());
             checkAndAlert(reading, type, "PM2P5", reading.getPm2p5());
             checkAndAlert(reading, type, "PM1P0", reading.getPm1p0());
@@ -61,41 +58,35 @@ public class SensorCheckScheduler {
             checkAndAlert(reading, type, "IR_TEMP_MAX", reading.getIrTempMax());
         }
 
-        // 4. 마지막 처리 id 업데이트
         lastProcessedId = readings.get(readings.size() - 1).getId();
         log.info("마지막 처리 id: {}", lastProcessedId);
     }
 
     private void checkAndAlert(SensorReading reading, DeviceType type, String sensorName, Double value) {
-        // 센서값 없으면 스킵
         if (value == null) return;
 
-        // 임계값 조회
         Optional<ThresholdRule> ruleOpt = thresholdRuleRepository
                 .findByDeviceTypeAndSensorName(type, sensorName);
         if (ruleOpt.isEmpty()) return;
 
         ThresholdRule rule = ruleOpt.get();
 
-        // 임계값 비교 → 등급 결정
         Byte alertLevel = null;
         double threshold = 0;
 
         if (value >= rule.getWarnLevel3()) {
-            alertLevel = 3; // 위험
+            alertLevel = 3;
             threshold = rule.getWarnLevel3();
         } else if (value >= rule.getWarnLevel2()) {
-            alertLevel = 2; // 경고
+            alertLevel = 2;
             threshold = rule.getWarnLevel2();
         } else if (value >= rule.getWarnLevel1()) {
-            alertLevel = 1; // 관심
+            alertLevel = 1;
             threshold = rule.getWarnLevel1();
         }
 
-        // 임계값 안 넘으면 스킵
         if (alertLevel == null) return;
 
-        // 알림 생성
         AlertEvent alert = new AlertEvent();
         alert.setAlertLevel(alertLevel);
         alert.setSensorName(sensorName);
@@ -107,9 +98,9 @@ public class SensorCheckScheduler {
         log.info("알림 생성 - 장비: {}, 센서: {}, 값: {}, 등급: {}",
                 reading.getDeviceId(), sensorName, value, alertLevel);
 
-        // 정비 오더 생성
         MaintOrder order = new MaintOrder();
         order.setAlertId(savedAlert.getAlertId());
+        order.setDeviceId(reading.getDeviceId());
         order.setOrderType(OrderType.CORRECTIVE);
         order.setPriority(alertLevel == 3 ? Priority.HIGH : alertLevel == 2 ? Priority.MEDIUM : Priority.LOW);
         order.setTitle("[" + reading.getDeviceId() + "] " + sensorName + " 임계값 초과");
