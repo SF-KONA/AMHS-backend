@@ -1,6 +1,7 @@
 package com.smartfactory.predictive.backend.config.jwt;
 
 import com.smartfactory.predictive.backend.domain.enums.Role;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,18 +14,16 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${auth.jwt-secret}")
-    private String secretKey;
+    private final SecretKey key;
+    private final long tokenValidTime = 1000L * 60 * 60 * 24; // 24시간
 
-    @Value("${auth.jwt-expiration-ms}")
-    private long expirationMs;
+    public JwtTokenProvider(@Value("${auth.jwt-secret}") String secretKey) {
+        this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    }
 
     public String createToken(String loginId, Role role) {
-
-        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + expirationMs);
+        Date expiry = new Date(now.getTime() + tokenValidTime);
 
         return Jwts.builder()
                 .subject(loginId)
@@ -33,5 +32,30 @@ public class JwtTokenProvider {
                 .expiration(expiry)
                 .signWith(key)
                 .compact();
+    }
+
+    public String getLoginId(String token) {
+        return getClaims(token).getSubject();
+    }
+
+    public String getRole(String token) {
+        return getClaims(token).get("role", String.class);
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Claims claims = getClaims(token);
+            return !claims.getExpiration().before(new Date());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
