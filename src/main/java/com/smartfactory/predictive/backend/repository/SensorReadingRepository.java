@@ -4,7 +4,11 @@ import com.smartfactory.predictive.backend.domain.entity.SensorReading;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface SensorReadingRepository extends JpaRepository<SensorReading, Long> {
-    // 💡 JpaRepository를 상속받는 것만으로도 DB 조회, 저장, 삭제 기능이 자동으로 완성됩니다!
+
+    // 마지막으로 처리한 id 이후 10개 가져오기
+    List<SensorReading> findTop10ByIdGreaterThanOrderByIdAsc(Long lastId);
 }

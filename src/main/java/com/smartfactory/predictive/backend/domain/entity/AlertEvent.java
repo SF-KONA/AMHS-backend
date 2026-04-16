@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 public class AlertEvent {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "alert_id")
     private Long alertId;
 
