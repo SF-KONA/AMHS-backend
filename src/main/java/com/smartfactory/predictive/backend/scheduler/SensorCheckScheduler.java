@@ -34,11 +34,13 @@ public class SensorCheckScheduler {
     private final MaintOrderRepository maintOrderRepository;
     private final DeviceRepository deviceRepository;
 
+    // 장비별 마지막 처리 id 기억
     private final Map<String, Long> lastProcessedIdMap = new HashMap<>();
 
     @Scheduled(fixedDelay = 20000)
     @Transactional
     public void checkSensor() {
+        // 모든 장비 id 가져오기
         List<String> deviceIds = deviceRepository.findAll()
                 .stream()
                 .map(d -> d.getDeviceId())
@@ -47,6 +49,7 @@ public class SensorCheckScheduler {
         for (String deviceId : deviceIds) {
             Long lastId = lastProcessedIdMap.getOrDefault(deviceId, 0L);
 
+            // 장비별 최신 3개 가져오기
             List<SensorReading> readings = sensorReadingRepository
                     .findTop3ByDeviceIdAndIdGreaterThanOrderByIdAsc(deviceId, lastId);
 
@@ -67,6 +70,7 @@ public class SensorCheckScheduler {
                 checkAndAlert(reading, type, "IR_TEMP_MAX", reading.getIrTempMax());
             }
 
+            // 장비별 마지막 처리 id 업데이트
             lastProcessedIdMap.put(deviceId, readings.get(readings.size() - 1).getId());
             log.info("장비: {}, 마지막 처리 id: {}", deviceId, lastProcessedIdMap.get(deviceId));
         }
