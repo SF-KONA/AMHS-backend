@@ -5,6 +5,8 @@ import com.smartfactory.predictive.backend.service.EquipmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import com.smartfactory.predictive.backend.dto.EquipmentDetailResponseDto;
+import com.smartfactory.predictive.backend.dto.SensorDataResponseDto;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/equipments") // 소문자 복수형
@@ -24,5 +26,11 @@ public class EquipmentController {
     @GetMapping("/{id}")
     public EquipmentDetailResponseDto getEquipmentDetail(@PathVariable(name = "id") String id) {
         return equipmentService.getEquipmentDetail(id);
+    }
+
+    // 특정 장비의 최근 센서 기록 60건 조회 API
+    @GetMapping("/{id}/sensors/history")
+    public List<SensorDataResponseDto> getSensorHistory(@PathVariable(name = "id") String id) {
+        return equipmentService.getRecentSensorData(id);
     }
 }
