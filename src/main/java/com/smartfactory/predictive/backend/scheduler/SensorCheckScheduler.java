@@ -101,6 +101,10 @@ public class SensorCheckScheduler {
 
         if (alertLevel == null) return;
 
+        // 이미 미확인 알림 있으면 중복 생성 안 함
+        if (alertEventRepository.existsByDeviceIdAndSensorNameAndAcknowledgedFalse(
+                reading.getDeviceId(), sensorName)) return;
+
         AlertEvent alert = new AlertEvent();
         alert.setAlertLevel(alertLevel);
         alert.setSensorName(sensorName);
