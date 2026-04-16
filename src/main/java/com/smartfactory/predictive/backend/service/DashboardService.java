@@ -3,12 +3,11 @@ package com.smartfactory.predictive.backend.service;
 import com.smartfactory.predictive.backend.dto.DashboardSummaryDto;
 import com.smartfactory.predictive.backend.dto.LineStatusResponseDto; // DTO 추가
 import com.smartfactory.predictive.backend.domain.enums.DeviceStatus;
-import com.smartfactory.predictive.backend.repository.DeviceRepository;
 import com.smartfactory.predictive.backend.repository.ProductionLineRepository; // Repository 추가
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.smartfactory.predictive.backend.repository.DeviceRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 
