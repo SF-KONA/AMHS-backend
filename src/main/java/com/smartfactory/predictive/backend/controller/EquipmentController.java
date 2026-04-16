@@ -4,6 +4,7 @@ import com.smartfactory.predictive.backend.dto.EquipmentListResponseDto;
 import com.smartfactory.predictive.backend.service.EquipmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import com.smartfactory.predictive.backend.dto.EquipmentDetailResponseDto;
 
 @RestController
 @RequestMapping("/api/equipments") // 소문자 복수형
@@ -18,5 +19,10 @@ public class EquipmentController {
             @RequestParam(required = false) String lineId,
             @RequestParam(required = false) String status) {
         return equipmentService.getEquipments(fabId, lineId, status);
+    }
+
+    @GetMapping("/{id}")
+    public EquipmentDetailResponseDto getEquipmentDetail(@PathVariable(name = "id") String id) {
+        return equipmentService.getEquipmentDetail(id);
     }
 }
