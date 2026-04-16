@@ -9,6 +9,10 @@ import java.util.List;
 @Repository
 public interface SensorReadingRepository extends JpaRepository<SensorReading, Long> {
 
-    // 마지막으로 처리한 id 이후 10개 가져오기
+    //
     List<SensorReading> findTop10ByIdGreaterThanOrderByIdAsc(Long lastId);
+
+    // 특정 장비의 최신 센서 데이터 60개를 수집 시간 내림차순으로 조회
+    List<SensorReading> findTop60ByDeviceIdOrderByCollectedAtDesc(String deviceId);
 }
+
