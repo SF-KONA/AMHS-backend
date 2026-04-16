@@ -5,14 +5,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SensorReadingRepository extends JpaRepository<SensorReading, Long> {
 
-    //
-    List<SensorReading> findTop10ByIdGreaterThanOrderByIdAsc(Long lastId);
+    // SensorCheckScheduler용 - 장비별 최신 3개
+    List<SensorReading> findTop3ByDeviceIdAndIdGreaterThanOrderByIdAsc(String deviceId, Long lastId);
 
-    // 특정 장비의 최신 센서 데이터 60개를 수집 시간 내림차순으로 조회
+    // 차트용 - 특정 장비 최신 60개
     List<SensorReading> findTop60ByDeviceIdOrderByCollectedAtDesc(String deviceId);
-}
 
+    // SensorPushScheduler용 - 특정 장비 최신 1개
+    Optional<SensorReading> findTopByDeviceIdOrderByCollectedAtDesc(String deviceId);
+}

@@ -1,12 +1,14 @@
 package com.smartfactory.predictive.backend.scheduler;
 
 import com.smartfactory.predictive.backend.dto.SensorDataResponseDto;
+import com.smartfactory.predictive.backend.repository.DeviceRepository;
 import com.smartfactory.predictive.backend.service.EquipmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 
 @Component
@@ -14,17 +16,26 @@ import java.util.List;
 public class SensorPushScheduler {
 
     private final EquipmentService equipmentService;
-    private final SimpMessagingTemplate messagingTemplate; // 메시지 전송 도구
+    private final SimpMessagingTemplate messagingTemplate;
+    private final DeviceRepository deviceRepository;
 
-    // 1.5초(1500ms)마다 실행
+    private List<String> deviceIds;
+
+    // 서버 시작할 때 DB에서 장비 목록 한 번만 로드
+    @PostConstruct
+    public void init() {
+        deviceIds = deviceRepository.findAll()
+                .stream()
+                .map(d -> d.getDeviceId())
+                .toList();
+    }
+
     @Scheduled(fixedRate = 1500)
     public void pushRealTimeSensorData() {
-        // 테스트를 위해 특정 장비(oht02)의 최신 1건만 가져옵니다.
-        List<SensorDataResponseDto> latest = equipmentService.getRecentSensorData("oht02");
-
-        if (!latest.isEmpty()) {
-            // 가장 최신 데이터(0번 인덱스)를 특정 채널로 전송!
-            messagingTemplate.convertAndSend("/topic/sensors/oht02", latest.get(0));
+        for (String deviceId : deviceIds) {
+            equipmentService.getLatestSensorData(deviceId).ifPresent(data ->
+                    messagingTemplate.convertAndSend("/topic/sensors/" + deviceId, data)
+            );
         }
     }
 }
