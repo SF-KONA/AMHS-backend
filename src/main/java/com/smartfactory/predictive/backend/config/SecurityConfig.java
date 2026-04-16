@@ -19,9 +19,10 @@ public class SecurityConfig {
                         // 1. 로그인 및 Swagger 관련 경로 모두 허용
                         .requestMatchers(
                                 "/api/auth/login",
-                                "/v3/api-docs/**",    // Swagger 데이터 경로
-                                "/swagger-ui/**",     // Swagger UI 경로
-                                "/swagger-ui.html"    // Swagger HTML 접속 경로
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/ws-sensor/**"
                         ).permitAll()
 
                         // 2. 장비 및 센서 API 허용
