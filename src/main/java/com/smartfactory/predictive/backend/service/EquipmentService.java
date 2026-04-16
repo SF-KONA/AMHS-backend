@@ -5,6 +5,7 @@ import com.smartfactory.predictive.backend.repository.DeviceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.smartfactory.predictive.backend.dto.EquipmentDetailResponseDto;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,5 +35,24 @@ public class EquipmentService {
                 .collect(Collectors.toList());
 
         return new EquipmentListResponseDto(filtered, filtered.size());
+    }
+
+    @Transactional(readOnly = true)
+    public EquipmentDetailResponseDto getEquipmentDetail(String id) {
+        // Optional로 반환되므로 .map을 사용하여 DTO로 변환하고, 없으면 예외를 던집니다.
+        return deviceRepository.findById(id)
+                .map(d -> new EquipmentDetailResponseDto(
+                        d.getDeviceId(),
+                        d.getDeviceName(),
+                        d.getDeviceType().name(),
+                        d.getDeviceManufacturer(),
+                        d.getInstaller(),
+                        d.getInstallDate(),
+                        d.getStatus().name(),
+                        d.getCumulativeOperatingDay(),
+                        d.getFabId(),
+                        d.getLineId()
+                ))
+                .orElseThrow(() -> new RuntimeException("해당 장비를 찾을 수 없습니다: " + id));
     }
 }
