@@ -52,4 +52,7 @@ public class MaintOrder {
 
     @Column(name = "alert_id", nullable = false)
     private Long alertId;
+
+    @Column(name = "device_id", length = 20)
+    private String deviceId;
 }
