@@ -37,6 +37,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/ws-sensor/**"
                         ).permitAll()
+                        .requestMatchers("/api/thresholds/**").hasRole("ADMIN")  // 추가
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
