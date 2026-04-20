@@ -37,7 +37,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/ws-sensor/**"
                         ).permitAll()
-                        .requestMatchers("/api/thresholds/**").hasRole("ADMIN")  // 추가
+                        .requestMatchers("/api/thresholds/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -48,7 +48,6 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:5173",
                 "http://amhs-kona.duckdns.org",
